@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 import math_func
+from snapshots import SnapshotRecorder
 
 
 NUM_ABEJAS = 80
-LIMITE_ABANDONO = 15 # Numero de intentos antes de abandonar una fuente de alimento
+LIMITE_ABANDONO = 20 # Numero de intentos antes de abandonar una fuente de alimento
 MAX_ITERACIONES = 200
 LIMITE_INF = -512 # Limites del espacio de búsqueda
 LIMITE_SUP = 512
@@ -25,7 +26,7 @@ def distancia_euclidiana(fuentes, i):
 
     return indices_vecinas
 
-def algoritmo_abc(display_graphics=False):
+def algoritmo_abc(display_graphics=False, snapshots=False):
     # Inicialización aleatoria de las fuentes de alimento (soluciones)
     # Matriz de forma (NUM_ABEJAS, DIMENSIONES)
     fuentes = np.random.uniform(LIMITE_INF, LIMITE_SUP, (NUM_ABEJAS, DIMENSIONES))
@@ -39,6 +40,10 @@ def algoritmo_abc(display_graphics=False):
     if display_graphics:
         puntos_rojos, fig = math_func.init_graphic(FUNCION_OBJETIVO)
         math_func.draw_points(fig, puntos_rojos, fuentes, fun=FUNCION_OBJETIVO)
+        if snapshots:
+            recorder = SnapshotRecorder(iteraciones_clave=[0, 100, 199])
+            recorder(0, fuentes, function=FUNCION_OBJETIVO)
+
     
     # Evaluar la calidad (fitness) de cada fuente
     fitness = np.array([FUNCION_OBJETIVO(f[0], f[1]) for f in fuentes])
@@ -149,9 +154,13 @@ def algoritmo_abc(display_graphics=False):
 
         # Gráfica animada
         if display_graphics:
-            math_func.draw_points(fig, puntos_rojos, fuentes, fun=FUNCION_OBJETIVO)
+            math_func.draw_points(fig, puntos_rojos, fuentes, fun=FUNCION_OBJETIVO, pausa=0)
+            if snapshots:
+                recorder.capture(iteracion, fuentes, function=FUNCION_OBJETIVO)
     if display_graphics:
         plt.ioff()
+        if snapshots:
+            recorder.plot_individual(FUNCION_OBJETIVO, LIMITE_INF, LIMITE_SUP)
         plt.show()
 
     return mejor_solucion, mejor_fitness, radios, historial_fitness
